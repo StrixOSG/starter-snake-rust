@@ -74,8 +74,20 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
     }
 
     // TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
-    // let board_width = &board.width;
-    // let board_height = &board.height;
+    let board_width = &_board.width;
+    let board_height = &_board.height;
+
+    if my_head.x == board_width - 1 {
+        is_move_safe.insert("right", false);
+    } else if my_head.x == 0 {
+        is_move_safe.insert("left", false);
+    }
+
+    if my_head.y == board_height - 1 {
+        is_move_safe.insert("up", false);
+    } else if my_head.y == 0 {
+        is_move_safe.insert("down", false);
+    }
 
     // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
     // let my_body = &you.body;
