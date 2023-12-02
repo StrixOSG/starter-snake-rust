@@ -15,7 +15,7 @@ use rand::seq::SliceRandom;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-use crate::{Battlesnake, Board, Game};
+use crate::{Battlesnake, Board, Game, Coord};
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -27,8 +27,8 @@ pub fn info() -> Value {
         "apiversion": "1",
         "author": "strixos",
         "color": "#f5bf42",
-        "head": "default",
-        "tail": "default"
+        "head": "silly",
+        "tail": "mlh-gene"
     });
 }
 
@@ -90,10 +90,35 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
     }
 
     // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-    // let my_body = &you.body;
+    let my_body = &you.body;
+    for part in &my_body[1..] {
+        if my_head.x == part.x && my_head.y + 1 == part.y {
+            is_move_safe.insert("up", false);
+        } else if my_head.x == part.x && my_head.y == part.y + 1 {
+            is_move_safe.insert("down", false);
+        } else if my_head.y == part.y && my_head.x + 1 == part.x {
+            is_move_safe.insert("left", false);
+        } else if my_head.y == part.y && my_head.x == part.x + 1 {
+            is_move_safe.insert("right", false);
+        }
+    }
 
     // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-    // let opponents = &board.snakes;
+    let opponents = &_board.snakes;
+    for opponent in opponents {
+        // Check each part of opponent snakes
+        for part in &opponent.body {
+            if my_head.x == part.x && my_head.y == part.y + 1 {
+                is_move_safe.insert("up", false);
+            } else if my_head.x == part.x && my_head.y + 1 == part.y {
+                is_move_safe.insert("down", false);
+            } else if my_head.y == part.y && my_head.x == part.x + 1 {
+                is_move_safe.insert("left", false);
+            } else if my_head.y == part.y && my_head.x + 1 == part.x {
+                is_move_safe.insert("right", false);
+            }
+        }
+    }
 
     // Are there any safe moves left?
     let safe_moves = is_move_safe
@@ -103,10 +128,36 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
         .collect::<Vec<_>>();
     
     // Choose a random move from the safe ones
-    let chosen = safe_moves.choose(&mut rand::thread_rng()).unwrap();
+    let mut chosen = safe_moves.choose(&mut rand::thread_rng()).unwrap();
 
     // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-    // let food = &board.food;
+    let food = &_board.food;
+    let mut nearest_food = None;
+    let mut min_distance = std::i32::MAX;
+    for f in food {
+        let distance = (my_head.x as i32 - f.x as i32).abs() + (my_head.y as i32 - f.y as i32).abs();
+        if distance < min_distance {
+            min_distance = distance;
+            nearest_food = Some(f);
+        }
+    }
+
+    if (nearest_food.is_some()) {
+        let close_food = nearest_food.unwrap();
+        let dir_x = my_head.x - close_food.x;
+        let dir_y = my_head.y - close_food.y;
+        for safe_move in safe_moves {
+            if dir_x < 0 && safe_move == "left" {
+                chosen = &"left";
+            } else if dir_x > 0 && safe_move == "right" {
+                chosen = &"right";
+            } else if dir_y > 0 && safe_move == "up" {
+                chosen = &"up";
+            } else if (dir_y < 0 && safe_move == "down") {
+                chosen = &"down";
+            }
+        }
+    }
 
     info!("MOVE {}: {}", turn, chosen);
     return json!({ "move": chosen });
