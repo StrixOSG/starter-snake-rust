@@ -142,21 +142,19 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
         }
     }
 
-    if (nearest_food.is_some()) {
+    if nearest_food.is_some() {
         let close_food = nearest_food.unwrap();
-        let dir_x = my_head.x - close_food.x;
-        let dir_y = my_head.y - close_food.y;
-        for safe_move in safe_moves {
-            if dir_x < 0 && safe_move == "left" {
+        let dir_x = my_head.x as i32 - close_food.x as i32;
+        let dir_y = my_head.y as i32 - close_food.y as i32;
+            if dir_x < 0 && safe_moves.contains(&"left") {
                 chosen = &"left";
-            } else if dir_x > 0 && safe_move == "right" {
+            } else if dir_x > 0 && safe_moves.contains(&"right") {
                 chosen = &"right";
-            } else if dir_y > 0 && safe_move == "up" {
+            } else if dir_y > 0 && safe_moves.contains(&"up") {
                 chosen = &"up";
-            } else if (dir_y < 0 && safe_move == "down") {
+            } else if dir_y < 0 && safe_moves.contains(&"down") {
                 chosen = &"down";
             }
-        }
     }
 
     info!("MOVE {}: {}", turn, chosen);
