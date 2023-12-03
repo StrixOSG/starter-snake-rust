@@ -110,11 +110,14 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
         for part in &opponent.body {
             if my_head.x == part.x && my_head.y == part.y + 1 {
                 is_move_safe.insert("up", false);
-            } else if my_head.x == part.x && my_head.y + 1 == part.y {
+            }
+            if my_head.x == part.x && my_head.y + 1 == part.y {
                 is_move_safe.insert("down", false);
-            } else if my_head.y == part.y && my_head.x == part.x + 1 {
+            }
+            if my_head.y == part.y && my_head.x == part.x + 1 {
                 is_move_safe.insert("left", false);
-            } else if my_head.y == part.y && my_head.x + 1 == part.x {
+            }
+            if my_head.y == part.y && my_head.x + 1 == part.x {
                 is_move_safe.insert("right", false);
             }
         }

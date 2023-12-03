@@ -1,1 +1,5 @@
 /target
+*.tfvars
+*.terraform.*
+*.hcl
+terraform.*
