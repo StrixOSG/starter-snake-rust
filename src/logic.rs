@@ -76,7 +76,6 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
     // TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
     let board_width = &_board.width;
     let board_height = &_board.height;
-
     if my_head.x == board_width - 1 {
         is_move_safe.insert("right", false);
     } else if my_head.x == 0 {
@@ -91,37 +90,72 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
 
     // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
     let my_body = &you.body;
+    info!("TURN {}", turn);
+    info!("HEAD {}: {}", my_head.x, my_head.y);
     for part in &my_body[1..] {
+        info!("BODY {}: {}", part.x, part.y);
         if my_head.x == part.x && my_head.y + 1 == part.y {
             is_move_safe.insert("up", false);
+            info!("NOT SAFE: up");
         }
         if my_head.x == part.x && my_head.y == part.y + 1 {
             is_move_safe.insert("down", false);
+            info!("NOT SAFE: down");
         }
         if my_head.y == part.y && my_head.x + 1 == part.x {
-            is_move_safe.insert("left", false);
+            is_move_safe.insert("right", false);
+            info!("NOT SAFE: right");
         }
         if my_head.y == part.y && my_head.x == part.x + 1 {
-            is_move_safe.insert("right", false);
+            is_move_safe.insert("left", false);
+            info!("NOT SAFE: left");
         }
     }
 
     // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
     let opponents = &_board.snakes;
+    info!("TURN {}", turn);
+    info!("HEAD {}: {}", my_head.x, my_head.y);
     for opponent in opponents {
+        if opponent.id == you.id {
+            continue;
+        }
         // Check each part of opponent snakes
         for part in &opponent.body {
+            info!("PART {}: {}", part.x, part.y);
             if my_head.x == part.x && my_head.y == part.y + 1 {
-                is_move_safe.insert("up", false);
+                is_move_safe.insert("down", false);
+                info!("NOT SAFE: down");
             }
             if my_head.x == part.x && my_head.y + 1 == part.y {
-                is_move_safe.insert("down", false);
+                is_move_safe.insert("up", false);
+                info!("NOT SAFE: up");
             }
             if my_head.y == part.y && my_head.x == part.x + 1 {
                 is_move_safe.insert("left", false);
+                info!("NOT SAFE: left");
             }
             if my_head.y == part.y && my_head.x + 1 == part.x {
                 is_move_safe.insert("right", false);
+                info!("NOT SAFE: right");
+            }
+            if you.length <= opponent.length {
+                if my_head.x == opponent.head.x && my_head.y == opponent.head.y + 1 || my_head.y ==  opponent.head.y + 2 {
+                    is_move_safe.insert("down", false);
+                    info!("NOT SAFE: down");
+                }
+                if my_head.x == opponent.head.x && my_head.y + 1 == opponent.head.y || my_head.y + 2 == opponent.head.y {
+                    is_move_safe.insert("up", false);
+                    info!("NOT SAFE: up");
+                }
+                if my_head.y == opponent.head.y && my_head.x == opponent.head.x + 1 || my_head.x == opponent.head.x + 2 {
+                    is_move_safe.insert("left", false);
+                    info!("NOT SAFE: left");
+                }
+                if my_head.y == opponent.head.y && my_head.x + 1 == opponent.head.x || my_head.x + 2 == opponent.head.x {
+                    is_move_safe.insert("right", false);
+                    info!("NOT SAFE: right");
+                }
             }
         }
     }
@@ -133,34 +167,43 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
         .map(|(k, _)| k)
         .collect::<Vec<_>>();
     
+    let mut chosen = "left";
     // Choose a random move from the safe ones
-    let mut chosen = safe_moves.choose(&mut rand::thread_rng()).unwrap();
-
-    // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-    let food = &_board.food;
-    let mut nearest_food = None;
-    let mut min_distance = std::i32::MAX;
-    for f in food {
-        let distance = (my_head.x as i32 - f.x as i32).abs() + (my_head.y as i32 - f.y as i32).abs();
-        if distance < min_distance {
-            min_distance = distance;
-            nearest_food = Some(f);
-        }
+    if !safe_moves.is_empty() {
+        chosen = safe_moves.choose(&mut rand::thread_rng()).unwrap();
     }
 
-    if nearest_food.is_some() {
-        let close_food = nearest_food.unwrap();
-        let dir_x = close_food.x as i32 - my_head.x as i32;
-        let dir_y = close_food.y as i32 - my_head.y as i32;
-            if dir_x < 0 && safe_moves.contains(&"left") {
-                chosen = &"left";
-            } else if dir_x > 0 && safe_moves.contains(&"right") {
-                chosen = &"right";
-            } else if dir_y > 0 && safe_moves.contains(&"up") {
-                chosen = &"up";
-            } else if dir_y < 0 && safe_moves.contains(&"down") {
-                chosen = &"down";
+    if you.length < 7 {
+        // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
+        let food = &_board.food;
+        let mut nearest_food = None;
+        let mut min_distance = std::i32::MAX;
+        for f in food {
+            let distance = (my_head.x as i32 - f.x as i32).abs() + (my_head.y as i32 - f.y as i32).abs();
+            if distance < min_distance {
+                min_distance = distance;
+                nearest_food = Some(f);
             }
+        }
+
+        if nearest_food.is_some() {
+            let close_food = nearest_food.unwrap();
+            let dir_x = close_food.x as i32 - my_head.x as i32;
+            let dir_y = close_food.y as i32 - my_head.y as i32;
+                if dir_x < 0 && safe_moves.contains(&"left") {
+                    chosen = &"left";
+                    info!("FOOD: left");
+                } else if dir_x > 0 && safe_moves.contains(&"right") {
+                    chosen = &"right";
+                    info!("FOOD: right");
+                } else if dir_y > 0 && safe_moves.contains(&"up") {
+                    chosen = &"up";
+                    info!("FOOD: up");
+                } else if dir_y < 0 && safe_moves.contains(&"down") {
+                    chosen = &"down";
+                    info!("FOOD: down");
+                }
+        }
     }
 
     info!("MOVE {}: {}", turn, chosen);
