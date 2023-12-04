@@ -6,14 +6,11 @@ use rocket::fairing::AdHoc;
 use rocket::http::Status;
 use rocket::serde::{json::Json, Deserialize};
 use serde::Serialize;
-use serde_json::{Value};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 
 mod logic;
-
-// API and Response Objects
-// See https://docs.battlesnake.com/api
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Game {
@@ -47,6 +44,41 @@ pub struct Battlesnake {
 pub struct Coord {
     x: u32,
     y: u32,
+}
+impl PartialEq for Coord {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+impl Eq for Coord {}
+impl Coord {
+    pub fn down(&self) -> Coord {
+        Coord {
+            x: self.x,
+            y: self.y - 1,
+        }
+    }
+
+    pub fn left(&self) -> Coord {
+        Coord {
+            x: self.x - 1,
+            y: self.y,
+        }
+    }
+
+    pub fn right(&self) -> Coord {
+        Coord {
+            x: self.x + 1,
+            y: self.y,
+        }
+    }
+
+    pub fn up(&self) -> Coord {
+        Coord {
+            x: self.x,
+            y: self.y + 1,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
